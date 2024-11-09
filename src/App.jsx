@@ -8,12 +8,20 @@ import ArtNFT from './ArtNFT.json';
 const App = () => {
   const [account, setAccount] = useState(null);
   const [contract, setContract] = useState(null);
+  const [ownerAddress, setOwnerAddress] = useState(null); // เก็บ address ของเจ้าของ NFT
 
   useEffect(() => {
     if (account) {
       const web3 = new Web3(window.ethereum);
-      const contractInstance = new web3.eth.Contract(ArtNFT.abi, "0x07e2F1ec5fDF249BAf8bC7837f2025123e982664");
+      const contractInstance = new web3.eth.Contract(ArtNFT.abi, "0xfAf407fB5bf4694937c895e0C3436BAF7c9C1E40");
       setContract(contractInstance);
+
+      // ดึง address ของเจ้าของจาก contract (สมมุติว่าเจ้าของถูกเก็บไว้ในฟังก์ชัน `getOwner`)
+      const fetchOwner = async () => {
+        const owner = await contractInstance.methods.owner().call();
+        setOwnerAddress(owner);
+      };
+      fetchOwner();
     }
   }, [account]);
 
@@ -23,7 +31,12 @@ const App = () => {
         <ConnectWallet onConnect={setAccount} />
       ) : (
         <>
-          <MintNFT contract={contract} account={account} />
+          {/* แสดง MintNFT ฟอร์มเฉพาะเจ้าของ */}
+          {account.toLowerCase() === ownerAddress?.toLowerCase() && (
+            <MintNFT contract={contract} account={account} />
+          )}
+
+          {/* แสดง NFTMarketplace ให้ทุกคน */}
           <NFTMarketplace contract={contract} account={account} />
         </>
       )}
